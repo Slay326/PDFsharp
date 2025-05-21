@@ -42,7 +42,11 @@ namespace MigraDoc.DocumentObjectModel
         /// Dash-dot-dotted underline.
         /// </summary>
         DotDotDash,
-
+        
+        /// <summary>
+        /// Dash-dot-dotted underline.
+        /// </summary>
+        Strikethrough,
         /* --- unsupported ---
           Double          = 3,
           Thick           = 6,

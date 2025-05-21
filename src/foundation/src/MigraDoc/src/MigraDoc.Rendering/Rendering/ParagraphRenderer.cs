@@ -67,6 +67,8 @@ namespace MigraDoc.Rendering
 
         Phase _phase;
 
+        private bool _currentStrikethrough;
+
         /// <summary>
         /// Initializes a ParagraphRenderer object for formatting.
         /// </summary>
@@ -2643,7 +2645,7 @@ namespace MigraDoc.Rendering
 
         void RenderUnderline(XUnitPt width, bool isWord)
         {
-            var pen = GetUnderlinePen(isWord);
+            var pen = GetUnderlinePen(isWord, ref _currentStrikethrough);
 
             bool penChanged = UnderlinePenChanged(pen);
             if (penChanged)
@@ -2675,7 +2677,10 @@ namespace MigraDoc.Rendering
         void EndUnderline(XPen pen, XUnitPt xPosition)
         {
             XUnitPt yPosition = CurrentBaselinePosition;
-            yPosition += 0.33 * _currentVerticalInfo.Descent;
+            if (_currentStrikethrough)
+                yPosition -= 0.5 * CurrentDomFont.Size.Point;
+            else
+                yPosition += 0.33 * _currentVerticalInfo.Descent;
             _gfx.DrawLine(pen, _underlineStartPos, yPosition, xPosition, yPosition);
         }
 
@@ -2725,33 +2730,36 @@ namespace MigraDoc.Rendering
             }
         }
 
-        XPen? GetUnderlinePen(bool isWord)
+        XPen? GetUnderlinePen(bool isWord, ref bool strikethrough)
         {
             var font = CurrentDomFont;
             var underlineType = font.Underline;
-            if (underlineType == Underline.None)
-                return null;
 
-            if (underlineType == Underline.Words && !isWord)
+            if (underlineType == Underline.Strikethrough)
+                strikethrough = true;
+            
+            if (underlineType == Underline.None ||
+                (underlineType == Underline.Words && !isWord))
                 return null;
-
-#if noCMYK
-            XPen pen = new XPen(XColor.FromArgb(font.Color.Argb), font.Size / 16);
-#else
-            Debug.Assert(_paragraph.Document != null, "_paragraph.Document != null");
-            var pen = new XPen(ColorHelper.ToXColor(font.Color, _paragraph.Document.UseCmykColor), font.Size.Point / 16);
-#endif
-            pen.DashStyle = font.Underline switch
+            
+            var pen = new XPen(
+                ColorHelper.ToXColor(font.Color, _paragraph.Document.UseCmykColor),
+                font.Size.Point / 16);
+            
+            pen.DashStyle = underlineType switch
             {
-                Underline.DotDash => XDashStyle.DashDot,
-                Underline.DotDotDash => XDashStyle.DashDotDot,
-                Underline.Dash => XDashStyle.Dash,
-                Underline.Dotted => XDashStyle.Dot,
-                Underline.Single => XDashStyle.Solid,
-                _ => XDashStyle.Solid
+                Underline.DotDash      => XDashStyle.DashDot,
+                Underline.DotDotDash   => XDashStyle.DashDotDot,
+                Underline.Dash         => XDashStyle.Dash,
+                Underline.Dotted       => XDashStyle.Dot,
+                Underline.Single       => XDashStyle.Solid,
+                Underline.Strikethrough=> XDashStyle.Solid,
+                _                      => XDashStyle.Solid
             };
+
             return pen;
         }
+
 
         //static XStringFormat StringFormat => _stringFormat ??= XStringFormats.Default;
         //static XStringFormat _stringFormat;
