@@ -1244,6 +1244,12 @@ namespace MigraDoc.Rendering
                 _gfx.DrawString(word, xFont, CurrentBrush, _currentXPosition, CurrentBaselinePosition);
             XUnitPt wordWidth = MeasureString(word);
             RenderUnderline(wordWidth, true);
+
+            if (font.Strikethrough != false)
+            {
+                StartUnderline(_currentXPosition);
+                RenderStrikethrough(wordWidth);
+            }
             RealizeHyperlink(wordWidth);
             _currentXPosition += wordWidth;
         }
@@ -2564,7 +2570,8 @@ namespace MigraDoc.Rendering
                         font.Superscript != _currentDomFont.Superscript ||
                         font.Subscript != _currentDomFont.Subscript ||
                         font.Color != _currentDomFont.Color ||
-                        font.Underline != _currentDomFont.Underline)
+                        font.Underline != _currentDomFont.Underline ||
+                        font.Strikethrough != _currentDomFont.Strikethrough)
                         throw new InvalidOperationException("Check CurrentDomFont.");
 #endif
                     return _currentDomFont;
@@ -2643,9 +2650,20 @@ namespace MigraDoc.Rendering
             };
         }
 
+        void RenderStrikethrough(XUnitPt width)
+        {
+            var startX = _underlineStartPos;
+            XUnitPt y = CurrentBaselinePosition - (CurrentDomFont.Size.Point * 0.3);
+
+            var pen = new XPen(
+                ColorHelper.ToXColor(CurrentDomFont.Color, _paragraph.Document.UseCmykColor),
+                CurrentDomFont.Size.Point / 16);
+            _gfx.DrawLine(pen, startX, y, startX + width, y);
+        }
+
         void RenderUnderline(XUnitPt width, bool isWord)
         {
-            var pen = GetUnderlinePen(isWord, ref _currentStrikethrough);
+            var pen = GetUnderlinePen(isWord);
 
             bool penChanged = UnderlinePenChanged(pen);
             if (penChanged)
@@ -2677,10 +2695,7 @@ namespace MigraDoc.Rendering
         void EndUnderline(XPen pen, XUnitPt xPosition)
         {
             XUnitPt yPosition = CurrentBaselinePosition;
-            if (_currentStrikethrough)
-                yPosition -= 0.5 * CurrentDomFont.Size.Point;
-            else
-                yPosition += 0.33 * _currentVerticalInfo.Descent;
+            yPosition += 0.33 * _currentVerticalInfo.Descent;
             _gfx.DrawLine(pen, _underlineStartPos, yPosition, xPosition, yPosition);
         }
 
@@ -2730,13 +2745,10 @@ namespace MigraDoc.Rendering
             }
         }
 
-        XPen? GetUnderlinePen(bool isWord, ref bool strikethrough)
+        XPen? GetUnderlinePen(bool isWord)
         {
             var font = CurrentDomFont;
             var underlineType = font.Underline;
-
-            if (underlineType == Underline.Strikethrough)
-                strikethrough = true;
             
             if (underlineType == Underline.None ||
                 (underlineType == Underline.Words && !isWord))
@@ -2753,7 +2765,6 @@ namespace MigraDoc.Rendering
                 Underline.Dash         => XDashStyle.Dash,
                 Underline.Dotted       => XDashStyle.Dot,
                 Underline.Single       => XDashStyle.Solid,
-                Underline.Strikethrough=> XDashStyle.Solid,
                 _                      => XDashStyle.Solid
             };
 

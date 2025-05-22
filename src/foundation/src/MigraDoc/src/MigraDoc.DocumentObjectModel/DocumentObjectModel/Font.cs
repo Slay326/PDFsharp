@@ -145,6 +145,12 @@ namespace MigraDoc.DocumentObjectModel
             set => Values.Bold = value;
         }
 
+        public bool Strikethrough
+        {
+            get => Values.Strikethrough ?? false;
+            set => Values.Strikethrough = value;
+        }
+
         /// <summary>
         /// Gets or sets the italic property.
         /// </summary>
@@ -324,6 +330,9 @@ namespace MigraDoc.DocumentObjectModel
 
                 if (Values.Underline is not null)
                     serializer.WriteSimpleAttribute("Underline", Underline);
+                
+                if (Values.Strikethrough is not null)
+                    serializer.WriteSimpleAttribute("Strikethrough", Strikethrough);
 
                 if (Values.Superscript is not null)
                     serializer.WriteSimpleAttribute("Superscript", Superscript);
@@ -428,6 +437,8 @@ namespace MigraDoc.DocumentObjectModel
             /// See enclosing document object class for documentation of this property.
             /// </summary>
             public Underline? Underline { get; set; }
+            
+            public bool? Strikethrough { get; set; }
 
             /// <summary>
             /// Gets or sets the internal nullable implementation value of the enclosing document object property.
