@@ -67,8 +67,6 @@ namespace MigraDoc.Rendering
 
         Phase _phase;
 
-        private bool _currentStrikethrough;
-
         /// <summary>
         /// Initializes a ParagraphRenderer object for formatting.
         /// </summary>

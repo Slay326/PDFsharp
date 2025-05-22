@@ -79,7 +79,6 @@ namespace HelloWorld
 
             // Add some text to the paragraph.
             paragraph.AddFormattedText("Hello, World!", TextFormat.Bold);
-            paragraph.Format.Font.Underline = Underline.Strikethrough;
 
             // Create the primary footer.
             HeaderFooter footer = section.Footers.Primary;
